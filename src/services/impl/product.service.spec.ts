@@ -3,12 +3,12 @@ import {
 	afterEach,
 	vi,
 } from 'vitest';
-import { mockDeep, type DeepMockProxy } from 'vitest-mock-extended';
-import { type INotificationService } from '../notifications.port.js';
-import { createDatabaseMock, cleanUp } from '../../utils/test-utils/database-tools.ts.js';
-import { ProductService } from './product.service.js';
-import { products, type Product } from '@/db/schema.js';
-import { type Database } from '@/db/type.js';
+import {mockDeep, type DeepMockProxy} from 'vitest-mock-extended';
+import {type INotificationService} from '../notifications.port.js';
+import {createDatabaseMock, cleanUp} from '../../utils/test-utils/database-tools.ts.js';
+import {ProductService} from './product.service.js';
+import {products, type Product} from '@/db/schema.js';
+import {type Database} from '@/db/type.js';
 
 describe('ProductService Tests', () => {
 	let notificationServiceMock: DeepMockProxy<INotificationService>;
@@ -18,7 +18,7 @@ describe('ProductService Tests', () => {
 	let closeDatabase: () => void;
 
 	beforeEach(async () => {
-		({ databaseMock, databaseName, close: closeDatabase } = await createDatabaseMock());
+		({databaseMock, databaseName, close: closeDatabase} = await createDatabaseMock());
 		notificationServiceMock = mockDeep<INotificationService>();
 		productService = new ProductService({
 			ns: notificationServiceMock,
@@ -53,18 +53,18 @@ describe('ProductService Tests', () => {
 		expect(product.leadTime).toBe(15);
 		expect(notificationServiceMock.sendDelayNotification).toHaveBeenCalledWith(product.leadTime, product.name);
 		const result = await databaseMock.query.products.findFirst({
-			where: (product, { eq }) => eq(product.id, product.id),
+			where: (product, {eq}) => eq(product.id, product.id),
 		});
 		expect(result).toEqual(product);
 	});
 	it('handleSeasonalProduct: should notify out-of-stock and set available=0 when restock is after season end', async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date('2026-11-20T00:00:00Z')); // within season, close to end
+		vi.setSystemTime(new Date('2026-11-20T00:00:00Z')); // Within season, close to end
 
 		// GIVEN: out of stock, leadTime pushes restock after season end
 		const product: Product = {
 			id: 2,
-			leadTime: 20, // restock 10 Dec > 30 Nov
+			leadTime: 20, // Restock 10 Dec > 30 Nov
 			available: 0,
 			type: 'SEASONAL',
 			name: 'Pumpkin Spice Latte',
@@ -81,7 +81,7 @@ describe('ProductService Tests', () => {
 		expect(notificationServiceMock.sendOutOfStockNotification).toHaveBeenCalledWith(product.name);
 
 		const result = await databaseMock.query.products.findFirst({
-			where: (p, { eq }) => eq(p.id, product.id),
+			where: (p, {eq}) => eq(p.id, product.id),
 		});
 
 		expect(result?.available).toBe(0);
@@ -91,7 +91,7 @@ describe('ProductService Tests', () => {
 
 	it('handleSeasonalProduct: should notify out-of-stock when current date is before season start', async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date('2026-08-15T00:00:00Z')); // before season start (Sep 1)
+		vi.setSystemTime(new Date('2026-08-15T00:00:00Z')); // Before season start (Sep 1)
 
 		// GIVEN
 		const product: Product = {
@@ -113,10 +113,10 @@ describe('ProductService Tests', () => {
 		expect(notificationServiceMock.sendOutOfStockNotification).toHaveBeenCalledWith(product.name);
 
 		const result = await databaseMock.query.products.findFirst({
-			where: (p, { eq }) => eq(p.id, product.id),
+			where: (p, {eq}) => eq(p.id, product.id),
 		});
 
-		// should still exist and match current available
+		// Should still exist and match current available
 		expect(result?.available).toBe(0);
 
 		vi.useRealTimers();
@@ -124,12 +124,12 @@ describe('ProductService Tests', () => {
 
 	it('handleSeasonalProduct: should call notifyDelay when restock is within season and season already started', async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date('2026-10-01T00:00:00Z')); // in season
+		vi.setSystemTime(new Date('2026-10-01T00:00:00Z')); // In season
 
 		// GIVEN
 		const product: Product = {
 			id: 4,
-			leadTime: 5, // restock Oct 6 <= Nov 30
+			leadTime: 5, // Restock Oct 6 <= Nov 30
 			available: 0,
 			type: 'SEASONAL',
 			name: 'Pumpkin Spice Latte',
@@ -175,7 +175,7 @@ describe('ProductService Tests', () => {
 		expect(notificationServiceMock.sendExpirationNotification).not.toHaveBeenCalled();
 
 		const result = await databaseMock.query.products.findFirst({
-			where: (p, { eq }) => eq(p.id, product.id),
+			where: (p, {eq}) => eq(p.id, product.id),
 		});
 
 		expect(result?.available).toBe(1);
@@ -194,7 +194,7 @@ describe('ProductService Tests', () => {
 			available: 2,
 			type: 'EXPIRABLE',
 			name: 'Yogurt',
-			expiryDate: new Date('2026-03-01T00:00:00Z'), // expired
+			expiryDate: new Date('2026-03-01T00:00:00Z'), // Expired
 			seasonStartDate: null,
 			seasonEndDate: null,
 		};
@@ -207,7 +207,7 @@ describe('ProductService Tests', () => {
 		expect(notificationServiceMock.sendExpirationNotification).toHaveBeenCalledWith(product.name, product.expiryDate);
 
 		const result = await databaseMock.query.products.findFirst({
-			where: (p, { eq }) => eq(p.id, product.id),
+			where: (p, {eq}) => eq(p.id, product.id),
 		});
 
 		expect(result?.available).toBe(0);

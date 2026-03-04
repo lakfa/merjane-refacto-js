@@ -1,10 +1,10 @@
 import fastify from 'fastify';
-import { asValue } from 'awilix';
-import { awilixPlugin } from './di/awilix.plugin.js';
-import { configureDiContext } from './di/di.context.js';
+import {asValue} from 'awilix';
+import {awilixPlugin} from './di/awilix.plugin.js';
+import {configureDiContext} from './di/di.context.js';
 import shutdownPlugin from './shutdown/shutdown.plugin.js';
-import { drizzlePlugin } from './db/drizzle.plugin.js';
-import { orderController } from './controllers/order.controller.js';
+import {drizzlePlugin} from './db/drizzle.plugin.js';
+import {orderController} from './controllers/order.controller.js';
 
 export async function buildFastify() {
 	const server = fastify();

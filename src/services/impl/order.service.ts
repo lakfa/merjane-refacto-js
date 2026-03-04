@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
-import { eq } from 'drizzle-orm';
-import { orders, products } from '@/db/schema.js';
-import { type Database } from '@/db/type.js';
-import { ProductService } from './product.service.js';
+import {eq} from 'drizzle-orm';
+import {type ProductService} from './product.service.js';
+import {orders, products} from '@/db/schema.js';
+import {type Database} from '@/db/type.js';
 
 export class OrderService {
 	public constructor(
@@ -10,7 +10,7 @@ export class OrderService {
 			db: Database;
 			ps: ProductService;
 		},
-	) { }
+	) {}
 
 	public async processOrder(orderId: number): Promise<void> {
 		const order = await this.deps.db.query.orders.findFirst({
@@ -25,9 +25,11 @@ export class OrderService {
 			},
 		});
 
-		if (!order?.products) return;
+		if (!order?.products) {
+			return;
+		}
 
-		for (const { product: p } of order.products) {
+		for (const {product: p} of order.products) {
 			switch (p.type) {
 				case 'NORMAL': {
 					if (p.available > 0) {
@@ -61,6 +63,10 @@ export class OrderService {
 						await this.deps.ps.handleExpiredProduct(p);
 					}
 
+					break;
+				}
+
+				default: {
 					break;
 				}
 			}
