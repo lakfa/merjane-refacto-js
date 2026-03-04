@@ -5,44 +5,51 @@ import {products, type Product} from '@/db/schema.js';
 import {type Database} from '@/db/type.js';
 
 export class ProductService {
-	private readonly ns: INotificationService;
+	private readonly notificationService: INotificationService;
 	private readonly db: Database;
 
-	public constructor({ns, db}: Pick<Cradle, 'ns' | 'db'>) {
-		this.ns = ns;
+	public constructor({notificationService, db}: Pick<Cradle, 'notificationService' | 'db'>) {
+		this.notificationService = notificationService;
 		this.db = db;
 	}
 
-	public async notifyDelay(leadTime: number, p: Product): Promise<void> {
-		p.leadTime = leadTime;
-		await this.db.update(products).set(p).where(eq(products.id, p.id));
-		this.ns.sendDelayNotification(leadTime, p.name);
+	public async notifyDelay(leadTime: number, product: Product): Promise<void> {
+		product.leadTime = leadTime;
+		await this.persist(product);
+		this.notificationService.sendDelayNotification(leadTime, product.name);
 	}
 
-	public async handleSeasonalProduct(p: Product): Promise<void> {
+	public async handleSeasonalProduct(product: Product): Promise<void> {
 		const currentDate = new Date();
-		const d = 1000 * 60 * 60 * 24;
-		if (new Date(currentDate.getTime() + (p.leadTime * d)) > p.seasonEndDate!) {
-			this.ns.sendOutOfStockNotification(p.name);
-			p.available = 0;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
-		} else if (p.seasonStartDate! > currentDate) {
-			this.ns.sendOutOfStockNotification(p.name);
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+		const ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
+		const restockDate = new Date(
+			currentDate.getTime() + (product.leadTime * ONE_DAY_IN_MS),
+		);
+		if (restockDate > product.seasonEndDate!) {
+			this.notificationService.sendOutOfStockNotification(product.name);
+			product.available = 0;
+			await this.persist(product);
+		} else if (product.seasonStartDate! > currentDate) {
+			this.notificationService.sendOutOfStockNotification(product.name);
+			await this.persist(product);
 		} else {
-			await this.notifyDelay(p.leadTime, p);
+			await this.notifyDelay(product.leadTime, product);
 		}
 	}
 
-	public async handleExpiredProduct(p: Product): Promise<void> {
+	public async handleExpiredProduct(product: Product): Promise<void> {
 		const currentDate = new Date();
-		if (p.available > 0 && p.expiryDate! > currentDate) {
-			p.available -= 1;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+		if (product.available > 0 && product.expiryDate! > currentDate) {
+			product.available -= 1;
+			await this.persist(product);
 		} else {
-			this.ns.sendExpirationNotification(p.name, p.expiryDate!);
-			p.available = 0;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+			this.notificationService.sendExpirationNotification(product.name, product.expiryDate!);
+			product.available = 0;
+			await this.persist(product);
 		}
+	}
+
+	private async persist(product: Product): Promise<void> {
+		await this.db.update(products).set(product).where(eq(products.id, product.id));
 	}
 }

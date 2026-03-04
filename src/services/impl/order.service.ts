@@ -8,7 +8,7 @@ export class OrderService {
 	public constructor(
 		private readonly deps: {
 			db: Database;
-			ps: ProductService;
+			productService: ProductService;
 		},
 	) {}
 
@@ -29,14 +29,14 @@ export class OrderService {
 			return;
 		}
 
-		for (const {product: p} of order.products) {
-			switch (p.type) {
+		for (const {product: production} of order.products) {
+			switch (production.type) {
 				case 'NORMAL': {
-					if (p.available > 0) {
-						p.available -= 1;
-						await this.deps.db.update(products).set(p).where(eq(products.id, p.id));
-					} else if (p.leadTime > 0) {
-						await this.deps.ps.notifyDelay(p.leadTime, p);
+					if (production.available > 0) {
+						production.available -= 1;
+						await this.deps.db.update(products).set(production).where(eq(products.id, production.id));
+					} else if (production.leadTime > 0) {
+						await this.deps.productService.notifyDelay(production.leadTime, production);
 					}
 
 					break;
@@ -44,11 +44,11 @@ export class OrderService {
 
 				case 'SEASONAL': {
 					const now = new Date();
-					if (now > p.seasonStartDate! && now < p.seasonEndDate! && p.available > 0) {
-						p.available -= 1;
-						await this.deps.db.update(products).set(p).where(eq(products.id, p.id));
+					if (now > production.seasonStartDate! && now < production.seasonEndDate! && production.available > 0) {
+						production.available -= 1;
+						await this.deps.db.update(products).set(production).where(eq(products.id, production.id));
 					} else {
-						await this.deps.ps.handleSeasonalProduct(p);
+						await this.deps.productService.handleSeasonalProduct(production);
 					}
 
 					break;
@@ -56,11 +56,11 @@ export class OrderService {
 
 				case 'EXPIRABLE': {
 					const now = new Date();
-					if (p.available > 0 && p.expiryDate! > now) {
-						p.available -= 1;
-						await this.deps.db.update(products).set(p).where(eq(products.id, p.id));
+					if (production.available > 0 && production.expiryDate! > now) {
+						production.available -= 1;
+						await this.deps.db.update(products).set(production).where(eq(products.id, production.id));
 					} else {
-						await this.deps.ps.handleExpiredProduct(p);
+						await this.deps.productService.handleExpiredProduct(production);
 					}
 
 					break;

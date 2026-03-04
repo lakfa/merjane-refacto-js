@@ -16,7 +16,6 @@ export const orderController = fastifyPlugin(async server => {
 	}, async (request, reply) => {
 		const orderService = server.diContainer.resolve('orderService');
 		await orderService.processOrder(request.params.orderId);
-
 		await reply.send({orderId: request.params.orderId});
 	});
 });

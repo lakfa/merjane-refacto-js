@@ -27,7 +27,7 @@ describe('OrderController Integration Tests', () => {
 
 		fastify = await buildFastify();
 		fastify.diContainer.register({
-			ns: asValue(notificationServiceMock as INotificationService),
+			notificationService: asValue(notificationServiceMock as INotificationService),
 		});
 		await fastify.ready();
 		database = fastify.database;
@@ -53,7 +53,7 @@ describe('OrderController Integration Tests', () => {
 	});
 
 	function createProducts(): ProductInsert[] {
-		const d = 24 * 60 * 60 * 1000;
+		const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 		return [
 			{
 				leadTime: 15, available: 30, type: 'NORMAL', name: 'USB Cable',
@@ -62,16 +62,16 @@ describe('OrderController Integration Tests', () => {
 				leadTime: 10, available: 0, type: 'NORMAL', name: 'USB Dongle',
 			},
 			{
-				leadTime: 15, available: 30, type: 'EXPIRABLE', name: 'Butter', expiryDate: new Date(Date.now() + (26 * d)),
+				leadTime: 15, available: 30, type: 'EXPIRABLE', name: 'Butter', expiryDate: new Date(Date.now() + (26 * ONE_DAY_IN_MS)),
 			},
 			{
-				leadTime: 90, available: 6, type: 'EXPIRABLE', name: 'Milk', expiryDate: new Date(Date.now() - (2 * d)),
+				leadTime: 90, available: 6, type: 'EXPIRABLE', name: 'Milk', expiryDate: new Date(Date.now() - (2 * ONE_DAY_IN_MS)),
 			},
 			{
-				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Watermelon', seasonStartDate: new Date(Date.now() - (2 * d)), seasonEndDate: new Date(Date.now() + (58 * d)),
+				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Watermelon', seasonStartDate: new Date(Date.now() - (2 * ONE_DAY_IN_MS)), seasonEndDate: new Date(Date.now() + (58 * ONE_DAY_IN_MS)),
 			},
 			{
-				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Grapes', seasonStartDate: new Date(Date.now() + (180 * d)), seasonEndDate: new Date(Date.now() + (240 * d)),
+				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Grapes', seasonStartDate: new Date(Date.now() + (180 * ONE_DAY_IN_MS)), seasonEndDate: new Date(Date.now() + (240 * ONE_DAY_IN_MS)),
 			},
 		];
 	}
